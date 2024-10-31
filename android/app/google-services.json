@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1044554595821",
+    "project_id": "rajivn-enterprises-28234",
+    "storage_bucket": "rajivn-enterprises-28234.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1044554595821:android:f2e8c07740b95eea757be4",
+        "android_client_info": {
+          "package_name": "com.example.rajivn_enterprises"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgJLEw6U8umISHerqkNV4OiZinWIqZw6s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
