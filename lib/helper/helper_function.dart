@@ -1,46 +1,46 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HelperFunction {
+  // Keys for SharedPreferences
+  static const String userLoggedInKey = "LOGGEDINKEY";
+  static const String userEmailKey = "USEREMAILKEY";
+  static const String userNameKey = "USERNAMEKEY";
 
-  //keys
-  // ignore: non_constant_identifier_names
-  static String UserLoggedInKey = "LOGGEDINKEY";
-  // ignore: non_constant_identifier_names
-  static String UserEmailKey = "USEREMAILKEY";
-  // ignore: non_constant_identifier_names
-  static String UserNameKey = "USERNAMEKEY";
-
-
-  // Saving the data to shared preference
+  // Saving the data to SharedPreferences
   static Future<bool> saveUserLoggedInStatus(bool isUserLoggedIn) async {
     SharedPreferences sf = await SharedPreferences.getInstance();
-    return await sf.setBool(UserLoggedInKey, isUserLoggedIn);
+    return await sf.setBool(userLoggedInKey, isUserLoggedIn);
   }
 
   static Future<bool> saveUserNameSF(String userName) async {
     SharedPreferences sf = await SharedPreferences.getInstance();
-    return await sf.setString(UserNameKey, userName);
+    return await sf.setString(userNameKey, userName);
   }
 
   static Future<bool> saveUserEmailSF(String userEmail) async {
     SharedPreferences sf = await SharedPreferences.getInstance();
-    return await sf.setString(UserEmailKey, userEmail);
+    return await sf.setString(userEmailKey, userEmail);
   }
 
-
-  //getting the data from shared preference
+  // Getting the data from SharedPreferences
   static Future<bool?> getUserLoggedInStatus() async {
     SharedPreferences sf = await SharedPreferences.getInstance();
-    return sf.getBool(UserLoggedInKey);
+    return sf.getBool(userLoggedInKey);
   }
 
   static Future<String?> getUserEmailFromSF() async {
     SharedPreferences sf = await SharedPreferences.getInstance();
-    return sf.getString(UserEmailKey);
+    return sf.getString(userEmailKey);
   }
 
   static Future<String?> getUserNameFromSF() async {
     SharedPreferences sf = await SharedPreferences.getInstance();
-    return sf.getString(UserNameKey);
+    return sf.getString(userNameKey);
+  }
+
+  // Clear all the stored data (useful for logout)
+  static Future<bool> clearUserData() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.clear();
   }
 }

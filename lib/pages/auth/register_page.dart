@@ -38,13 +38,13 @@ class _RegisterPageState extends State<RegisterPage> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   const Text(
-                    "Rajiv Enterprises",
+                    "Yogi Group",
                     style: TextStyle(
                         fontSize: 40, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
 
-                  Image.asset("assets/images/login.png"),
+                  Image.asset("assets/images/poclain5.jpg"),
                   TextFormField(
                     decoration: textInputDecoration.copyWith(
                         labelText: "Full Name",

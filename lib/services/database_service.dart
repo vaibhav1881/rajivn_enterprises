@@ -31,6 +31,26 @@ class DatabaseService {
     return snapshot;
   }
 
+  // Check if the user is admin
+  Future<bool> isAdmin(String email) async {
+    try {
+      // Admin credentials
+      const String adminEmail = "bhagwatvr2004@gmail.com";
+      const String adminPassword = "12345678";
+
+      // Retrieve the user's email and password from Firestore
+      DocumentSnapshot userDoc = await userCollection.doc(uid).get();
+      if (userDoc.exists) {
+        String email = userDoc['email'];
+        String password = userDoc['password']; // Store password securely if required
+        return email == adminEmail && password == adminPassword;
+      }
+    } catch (e) {
+      print("Error checking if user is admin: $e");
+    }
+    return false;
+  }
+
   // Adding a new machinery entry
   Future addMachineryEntry({
     required String machineType,
