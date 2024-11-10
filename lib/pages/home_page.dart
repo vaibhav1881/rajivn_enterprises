@@ -1,8 +1,10 @@
 import 'package:rajivn_enterprises/helper/helper_function.dart';
+import 'package:rajivn_enterprises/pages/admin_dashboard.dart';
 import 'package:rajivn_enterprises/pages/auth/login_page.dart';
 import 'package:rajivn_enterprises/pages/machinery_entry_page.dart';
 import 'package:rajivn_enterprises/pages/profile_page.dart';
 import 'package:rajivn_enterprises/pages/search_page.dart';
+import 'package:rajivn_enterprises/pages/diesel_entry_page.dart'; // Add diesel entry page
 import 'package:rajivn_enterprises/services/auth_service.dart';
 import 'package:rajivn_enterprises/services/database_service.dart';
 import 'package:rajivn_enterprises/widgets/machinery_entry_tile.dart';
@@ -20,9 +22,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String userName = "";
   String email = "";
+  bool isMachineOperator = false;
   AuthService authService = AuthService();
   Stream? machineryEntries;
-  final bool _isLoading = false;
 
   @override
   void initState() {
@@ -32,16 +34,27 @@ class _HomePageState extends State<HomePage> {
 
   gettingUserData() async {
     // Retrieve user data from shared preferences or any helper functions
-    // Assuming HelperFunctions are properly set up in your project
     await HelperFunction.getUserEmailFromSF().then((value) {
       setState(() {
         email = value!;
       });
+
+      // If the user's email matches the admin's email, navigate them to the admin dashboard
+      if (email == "bhagwatvr2004@gmail.com") {
+        nextScreenReplace(context, const AdminDashboard());
+      }
     });
+
     await HelperFunction.getUserNameFromSF().then((val) {
       setState(() {
         userName = val!;
       });
+    });
+
+    // Check if the user is an admin, and if not, set the user as a machine operator
+    bool isAdmin = await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid).isAdmin(email);
+    setState(() {
+      isMachineOperator = !isAdmin;  // If not admin, user is a machine operator
     });
 
     // Retrieve machinery entries for this user
@@ -53,6 +66,7 @@ class _HomePageState extends State<HomePage> {
       });
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +114,7 @@ class _HomePageState extends State<HomePage> {
                 height: 2,
               ),
               ListTile(
-                onTap: () {},
+                onTap: () {} ,
                 selectedColor: Theme.of(context).primaryColor,
                 selected: true,
                 contentPadding:
@@ -174,7 +188,21 @@ class _HomePageState extends State<HomePage> {
               )
             ],
           )),
-      body: machineryEntryList(),
+      body: Column(
+        children: [
+          if (isMachineOperator) ...[
+            ElevatedButton(
+              onPressed: () => nextScreen(context, const MachineryEntryPage()),
+              child: const Text("Machine Entry"),
+            ),
+            ElevatedButton(
+              onPressed: () => nextScreen(context, const DieselEntryPage()),
+              child: const Text("Diesel Entry"),
+            ),
+          ],
+          Expanded(child: machineryEntryList()),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           nextScreen(context, const MachineryEntryPage());
@@ -251,4 +279,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-
