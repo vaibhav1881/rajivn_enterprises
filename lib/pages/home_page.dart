@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:rajivn_enterprises/pages/machinery_entry_page.dart';
 import 'package:rajivn_enterprises/pages/diesel_entry_page.dart';
 import 'package:rajivn_enterprises/pages/maintenance_page.dart';
+import 'package:rajivn_enterprises/pages/profile_page.dart';
+import 'package:rajivn_enterprises/pages/auth/login_page.dart';
+import 'package:rajivn_enterprises/services/auth_service.dart';
+import 'package:rajivn_enterprises/helper/helper_function.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required String title});
@@ -11,6 +15,31 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  String userName = "";
+  String email = "";
+  AuthService authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    gettingUserData();
+  }
+
+  gettingUserData() async {
+    // Retrieve user data from shared preferences or any helper functions
+    await HelperFunction.getUserEmailFromSF().then((value) {
+      setState(() {
+        email = value!;
+      });
+    });
+
+    await HelperFunction.getUserNameFromSF().then((val) {
+      setState(() {
+        userName = val!;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,22 +63,103 @@ class _HomePageState extends State<HomePage> {
           color: Colors.black,
           child: ListView(
             padding: const EdgeInsets.symmetric(vertical: 50),
-            children: const [
-              Icon(Icons.account_circle, size: 150, color: Colors.grey),
-              SizedBox(height: 20),
+            children: <Widget>[
+              Icon(
+                Icons.account_circle,
+                size: 150,
+                color: Colors.grey[700],
+              ),
+              const SizedBox(
+                height: 15,
+              ),
               Text(
-                "User Name",
+                userName,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
-              Divider(color: Colors.grey),
+              const SizedBox(
+                height: 30,
+              ),
+              const Divider(
+                height: 2,
+                color: Colors.grey,
+              ),
               ListTile(
-                leading: Icon(Icons.settings, color: Colors.white),
-                title: Text(
-                  "Settings",
+                onTap: () {},
+                selectedColor: Colors.blue,
+                selected: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                leading: const Icon(Icons.dashboard, color: Colors.white),
+                title: const Text(
+                  "Dashboard",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              ListTile(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfilePage(
+                        userName: userName,
+                        email: email,
+                      ),
+                    ),
+                  );
+                },
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                leading: const Icon(Icons.account_circle, color: Colors.white),
+                title: const Text(
+                  "Profile",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              ListTile(
+                onTap: () async {
+                  showDialog(
+                    barrierDismissible: false,
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text("Logout"),
+                        content: const Text("Are you sure you want to logout?"),
+                        actions: [
+                          IconButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            icon: const Icon(
+                              Icons.cancel,
+                              color: Colors.red,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () async {
+                              await authService.signOut();
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginPage(),
+                                ),
+                                    (route) => false,
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.done,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                leading: const Icon(Icons.exit_to_app, color: Colors.white),
+                title: const Text(
+                  "Logout",
                   style: TextStyle(color: Colors.white),
                 ),
               ),
