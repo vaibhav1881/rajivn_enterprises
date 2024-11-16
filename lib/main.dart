@@ -50,14 +50,7 @@ class _MyAppState extends State<MyApp> {
 
       ),
       debugShowCheckedModeBanner: false,
-     home: _isSignedIn ?  const HomePage(title: "title") : const LoginPage(),
+      home: _isSignedIn ?  const HomePage(title: "title") : const LoginPage(),
     );
   }
 }
-
-
-
-
-
-
-
