@@ -30,30 +30,23 @@ class _LoginPageState extends State<LoginPage> {
         _isLoading = true;
       });
 
-      // Ensure that the correct number of arguments are passed
       await authService
-          .loginWithUserNameandPassword(context, email, password)  // Passing BuildContext as the first argument
+          .loginWithUserNameandPassword(context, email, password)
           .then((value) async {
         if (value == true) {
           QuerySnapshot snapshot =
           await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
               .gettingUserData(email);
-          // Save login state
           await HelperFunction.saveUserLoggedInStatus(true);
           await HelperFunction.saveUserEmailSF(email);
           await HelperFunction.saveUserNameSF(snapshot.docs[0]['fullName']);
 
-          // Check if the email and password match the admin credentials
           if (email == "bhagwatvr2004@gmail.com" && password == "12345678") {
-            // Admin login
             nextScreenReplace(context, const AdminDashboard());
           } else {
-            // Regular user (machine operator) login
-            // Redirect to the HomePage where user can select between Machine Entry or Diesel Entry
             nextScreenReplace(context, const HomePage(title: 'Machinery Tracker'));
           }
         } else {
-          // Error message if login failed
           showSnackbar(context, Colors.red, value);
           setState(() {
             _isLoading = false;
@@ -66,10 +59,10 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black87, // Dark background
+      backgroundColor: Colors.black87,
       appBar: AppBar(
-        backgroundColor: Colors.black87, // Same color as background to remove any color accent
-        elevation: 0, // No elevation (shadow)
+        backgroundColor: Colors.black87,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -78,18 +71,28 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                'Yogi Group',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+              // Gradient text for "Yogi Group"
+              ShaderMask(
+                shaderCallback: (bounds) => LinearGradient(
+                  colors: [Colors.white, Colors.teal],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ).createShader(
+                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                ),
+                child: const Text(
+                  'Yogi Group',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               // Image from your original code
               Image.asset("assets/images/poclain5.png"), // Replace with your actual image asset path
-              const SizedBox(height: 16), // Space after the image
+              const SizedBox(height: 16),
               TextFormField(
                 decoration: InputDecoration(
                   filled: true,
@@ -108,10 +111,8 @@ class _LoginPageState extends State<LoginPage> {
                   });
                 },
                 validator: (val) {
-                  return RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-                      .hasMatch(val!)
-                      ? null
-                      : "Please enter a valid email";
+                  return RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_{|}~]+@[a-zAZ0-9]+\.[a-zA-Z]+")
+                      .hasMatch(val!) ? null : "Please enter a valid email";
                 },
               ),
               const SizedBox(height: 12),
