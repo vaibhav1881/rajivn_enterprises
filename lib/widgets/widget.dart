@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// TextInputDecoration is a reusable decoration for input fields
 const textInputDecoration = InputDecoration(
     labelStyle: TextStyle(color: Colors.black, fontWeight: FontWeight.w400),
     focusedBorder: OutlineInputBorder(
@@ -13,17 +14,24 @@ const textInputDecoration = InputDecoration(
     ),
 );
 
-void nextScreen(context, page) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+// Function to navigate to the next screen without replacing the current screen
+void nextScreen(BuildContext context, Widget page) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => page),
+    );
 }
 
-void nextScreenReplace(context, page) {
+// Function to navigate to the next screen and replace the current screen
+void nextScreenReplace(BuildContext context, Widget page) {
     Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => page));
+        context,
+        MaterialPageRoute(builder: (context) => page),
+    );
 }
 
-
-void showSnackbar(context, color, message) {
+// Function to show a snackbar message
+void showSnackbar(BuildContext context, Color color, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(

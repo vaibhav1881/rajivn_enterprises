@@ -47,7 +47,7 @@ class _LoginPageState extends State<LoginPage> {
             nextScreenReplace(context, const HomePage(title: 'Machinery Tracker'));
           }
         } else {
-          showSnackbar(context, Colors.red, value);
+          showCustomSnackbar(context, Colors.red, value.toString()); // Renamed function
           setState(() {
             _isLoading = false;
           });
@@ -186,4 +186,21 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+}
+
+// Function to navigate to the next screen and replace the current one
+void nextScreenReplace(BuildContext context, Widget page) {
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => page),
+  );
+}
+
+// Renamed function to avoid conflict with other `showSnackbar` functions
+void showCustomSnackbar(BuildContext context, Color color, String text) {
+  final snackBar = SnackBar(
+    content: Text(text),
+    backgroundColor: color,
+  );
+  ScaffoldMessenger.of(context).showSnackBar(snackBar);
 }

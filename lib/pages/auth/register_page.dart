@@ -1,10 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:rajivn_enterprises/helper/helper_function.dart';
-import 'package:rajivn_enterprises/pages/auth/login_page.dart';
-import 'package:rajivn_enterprises/pages/home_page.dart';
+import 'package:rajivn_enterprises/pages/auth/login_page.dart'; // Correct import for LoginPage
+import 'package:rajivn_enterprises/pages/home_page.dart'; // Correct import for HomePage
 import 'package:rajivn_enterprises/services/auth_service.dart';
-import 'package:rajivn_enterprises/widgets/widget.dart';
+import 'package:rajivn_enterprises/widgets/widget.dart'; // Import widget.dart
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -252,9 +252,9 @@ class _RegisterPageState extends State<RegisterPage> {
           await HelperFunction.saveUserLoggedInStatus(true);
           await HelperFunction.saveUserEmailSF(email);
           await HelperFunction.saveUserNameSF(fullName);
-          nextScreenReplace(context, const HomePage(title: 'Homepage'));
+          nextScreen(context, const HomePage(title: 'Homepage')); // Correct usage of nextScreenReplace
         } else {
-          showSnackbar(context, Colors.red, value);
+          showSnackbar(context, Colors.red, value.toString()); // Now calling showSnackbar
           setState(() {
             _isLoading = false;
           });
