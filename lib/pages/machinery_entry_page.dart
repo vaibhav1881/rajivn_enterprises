@@ -15,14 +15,15 @@ class MachineryEntryPage extends StatefulWidget {
 class _MachineryEntryPageState extends State<MachineryEntryPage> {
   final TextEditingController _driverIDController = TextEditingController();
   final TextEditingController _machineIDController = TextEditingController();
-  final TextEditingController _startHourController = TextEditingController();
-  final TextEditingController _stopHourController = TextEditingController();
   final TextEditingController _imageController = TextEditingController();
+  final TextEditingController _selectedHourController = TextEditingController();
   String? _selectedMachineType = 'Bucket'; // Default machine type
   String? _selectedSiteName;
+  String? _selectedHour;
   String? userID;
   File? _imageFile;
   final _formKey = GlobalKey<FormState>();
+  DateTime? _selectedDate;
 
   @override
   void initState() {
@@ -60,7 +61,7 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
     }
   }
 
-  Future<void> _selectDateTime(BuildContext context, bool isStart) async {
+  Future<void> _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -68,28 +69,10 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
       lastDate: DateTime(2101),
     );
 
-    if (pickedDate != null) {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(DateTime.now()),
-      );
-
-      if (pickedTime != null) {
-        final selectedDateTime = DateTime(
-          pickedDate.year,
-          pickedDate.month,
-          pickedDate.day,
-          pickedTime.hour,
-          pickedTime.minute,
-        );
-        setState(() {
-          if (isStart) {
-            _startHourController.text = "${selectedDateTime.toLocal()}".split(' ')[0] + ' ' + "${selectedDateTime.hour}:${selectedDateTime.minute}";
-          } else {
-            _stopHourController.text = "${selectedDateTime.toLocal()}".split(' ')[0] + ' ' + "${selectedDateTime.hour}:${selectedDateTime.minute}";
-          }
-        });
-      }
+    if (pickedDate != null && pickedDate != _selectedDate) {
+      setState(() {
+        _selectedDate = pickedDate;
+      });
     }
   }
 
@@ -101,16 +84,17 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
   Future<void> submitMachineryEntry() async {
     if (_formKey.currentState!.validate()) {
       try {
-        await FirebaseFirestore.instance.collection('machinery_entries').add({
+        await FirebaseFirestore.instance.collection('machinery_entry').add({
           'userId': userID,
           'driverID': _driverIDController.text,
           'machineID': _machineIDController.text,
           'machineType': _selectedMachineType,
           'siteName': _selectedSiteName,
-          'startHour': Timestamp.fromDate(DateTime.parse(_startHourController.text)),
-          'stopHour': Timestamp.fromDate(DateTime.parse(_stopHourController.text)),
-          'imageUrl': _imageFile?.path,
-          'createdAt': FieldValue.serverTimestamp(),
+          'selectedDate': _selectedDate, // Store selected date
+          'selectedHour': _selectedHour, // Store selected hour (Start Hour or Stop Hour)
+          'enteredHour': _selectedHourController.text, // Store entered hour
+          'imageUrl': _imageFile?.path, // Store image URL
+          'createdAt': FieldValue.serverTimestamp(), // Timestamp when entry is created
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -120,13 +104,14 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
         // Clear form after submission
         _driverIDController.clear();
         _machineIDController.clear();
-        _startHourController.clear();
-        _stopHourController.clear();
         _imageController.clear();
+        _selectedHourController.clear();
         setState(() {
           _imageFile = null;
           _selectedMachineType = 'Bucket'; // Reset to default
           _selectedSiteName = null;
+          _selectedDate = null;
+          _selectedHour = null;
         });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -136,13 +121,13 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
     }
   }
 
+
   @override
   void dispose() {
     _driverIDController.dispose();
     _machineIDController.dispose();
-    _startHourController.dispose();
-    _stopHourController.dispose();
     _imageController.dispose();
+    _selectedHourController.dispose();
     super.dispose();
   }
 
@@ -196,9 +181,13 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
                       });
                     }),
                     const SizedBox(height: 20),
-                    _buildFancyTextField(_startHourController, "Start Hour", Icons.access_time),
+                    _buildDatePicker(),
                     const SizedBox(height: 20),
-                    _buildFancyTextField(_stopHourController, "Stop Hour", Icons.access_time_outlined),
+                    _buildHourDropdown(),
+                    if (_selectedHour != null) ...[
+                      const SizedBox(height: 20),
+                      _buildManualHourTextField(),
+                    ],
                     const SizedBox(height: 20),
                     _buildImagePickerButton(),
                     const SizedBox(height: 10), // Reduced space
@@ -270,6 +259,97 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
     );
   }
 
+  Widget _buildDatePicker() {
+    return GestureDetector(
+      onTap: () => _selectDate(context),
+      child: AbsorbPointer(
+        child: TextFormField(
+          controller: TextEditingController(text: _selectedDate != null ? _selectedDate!.toLocal().toString().split(' ')[0] : ''),
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            labelText: "Select Date",
+            labelStyle: const TextStyle(color: Colors.white70),
+            prefixIcon: const Icon(Icons.calendar_today, color: Colors.teal),
+            filled: true,
+            fillColor: Colors.grey[850],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: const BorderSide(color: Colors.transparent),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: const BorderSide(color: Colors.teal, width: 2),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHourDropdown() {
+    return InputDecorator(
+      decoration: InputDecoration(
+        labelText: "Select Hour",
+        labelStyle: const TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.grey[850],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedHour,
+          isExpanded: true,
+          style: const TextStyle(color: Colors.white),
+          onChanged: (String? newValue) {
+            setState(() {
+              _selectedHour = newValue;
+              _selectedHourController.clear(); // Clear the manual input when dropdown is changed
+            });
+          },
+          items: <String>['Start Hour', 'Stop Hour']
+              .map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          dropdownColor: Colors.black,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildManualHourTextField() {
+    return TextFormField(
+      controller: _selectedHourController,
+      keyboardType: TextInputType.number,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: "Enter Hour",
+        labelStyle: const TextStyle(color: Colors.white70),
+        prefixIcon: const Icon(Icons.access_time, color: Colors.teal),
+        filled: true,
+        fillColor: Colors.grey[850],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: const BorderSide(color: Colors.transparent),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: const BorderSide(color: Colors.teal, width: 2),
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter the hour';
+        }
+        return null;
+      },
+    );
+  }
+
   Widget _buildImagePickerButton() {
     return Center(
       child: ElevatedButton.icon(
@@ -277,7 +357,7 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
         icon: const Icon(Icons.camera_alt, color: Colors.white),
         label: const Text("Pick Image", style: TextStyle(color: Colors.white)),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.teal, // Teal color
+          backgroundColor: Colors.teal,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
           padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
         ),
@@ -291,7 +371,7 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
         onPressed: submitMachineryEntry,
         child: const Text("Submit Entry", style: TextStyle(color: Colors.white, fontSize: 18)),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.teal, // Teal color
+          backgroundColor: Colors.teal,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
           padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
         ),
