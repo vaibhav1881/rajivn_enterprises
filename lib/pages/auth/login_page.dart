@@ -1,13 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:rajivn_enterprises/helper/helper_function.dart';
 import 'package:rajivn_enterprises/pages/auth/register_page.dart';
 import 'package:rajivn_enterprises/pages/home_page.dart';
-import 'package:rajivn_enterprises/pages/admin_dashboard.dart';
 import 'package:rajivn_enterprises/services/auth_service.dart';
 import 'package:rajivn_enterprises/services/database_service.dart';
+import 'package:rajivn_enterprises/helper/helper_function.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../widgets/widget.dart';
 
 class LoginPage extends StatefulWidget {
@@ -22,39 +21,49 @@ class _LoginPageState extends State<LoginPage> {
   String email = "";
   String password = "";
   bool _isLoading = false;
-  AuthService authService = AuthService();
 
+  final AuthService authService = AuthService();
+
+  // Login function
   Future<void> login() async {
     if (formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
-      await authService
-          .loginWithUserNameandPassword(context, email, password)
-          .then((value) async {
-        if (value == true) {
-          QuerySnapshot snapshot =
-          await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
-              .gettingUserData(email);
-          await HelperFunction.saveUserLoggedInStatus(true);
-          await HelperFunction.saveUserEmailSF(email);
-          await HelperFunction.saveUserNameSF(snapshot.docs[0]['fullName']);
+      try {
+        // Attempt login
+        Object? loginSuccess = await authService.loginWithUserNameandPassword(context, email, password);
 
-          if (email == "bhagwatvr2004@gmail.com" && password == "12345678") {
-            nextScreenReplace(context, const AdminDashboard());
+        if (loginSuccess != null) {
+          // Fetch user data from Firestore using the correct method
+          var snapshot = await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
+              .getUserDataByEmail(email);
+
+          if (snapshot != null && snapshot.isNotEmpty) {
+            // Save user data
+            await HelperFunction.saveUserLoggedInStatus(true);
+            await HelperFunction.saveUserEmailSF(email);
+            await HelperFunction.saveUserNameSF(snapshot['fullname']);
+
+            // Navigate to home
+            nextScreenReplace(context, const HomePage());
           } else {
-            nextScreenReplace(context, const HomePage(title: 'Machinery Tracker'));
+            showCustomSnackbar(context, Colors.red, "User data not found.");
           }
         } else {
-          showCustomSnackbar(context, Colors.red, value.toString()); // Renamed function
-          setState(() {
-            _isLoading = false;
-          });
+          showCustomSnackbar(context, Colors.red, "Invalid credentials. Please try again.");
         }
-      });
+      } catch (e) {
+        showCustomSnackbar(context, Colors.red, "An error occurred: $e");
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +82,7 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               // Gradient text for "Yogi Group"
               ShaderMask(
-                shaderCallback: (bounds) => LinearGradient(
+                shaderCallback: (bounds) => const LinearGradient(
                   colors: [Colors.white, Colors.teal],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -90,9 +99,10 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Image from your original code
-              Image.asset("assets/images/poclain5.png"), // Replace with your actual image asset path
+              // Image
+              Image.asset("assets/images/poclain5.png"), // Ensure this is correctly set in pubspec.yaml
               const SizedBox(height: 16),
+              // Email input
               TextFormField(
                 decoration: InputDecoration(
                   filled: true,
@@ -111,11 +121,17 @@ class _LoginPageState extends State<LoginPage> {
                   });
                 },
                 validator: (val) {
-                  return RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_{|}~]+@[a-zAZ0-9]+\.[a-zA-Z]+")
-                      .hasMatch(val!) ? null : "Please enter a valid email";
+                  if (val == null || val.isEmpty) {
+                    return "Email cannot be empty";
+                  }
+                  return RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+                      .hasMatch(val)
+                      ? null
+                      : "Please enter a valid email";
                 },
               ),
               const SizedBox(height: 12),
+              // Password input
               TextFormField(
                 obscureText: true,
                 decoration: InputDecoration(
@@ -129,20 +145,22 @@ class _LoginPageState extends State<LoginPage> {
                     borderSide: BorderSide.none,
                   ),
                 ),
-                validator: (val) {
-                  if (val!.length < 6) {
-                    return "Password must be at least 6 characters";
-                  } else {
-                    return null;
-                  }
-                },
                 onChanged: (val) {
                   setState(() {
                     password = val;
                   });
                 },
+                validator: (val) {
+                  if (val == null || val.isEmpty) {
+                    return "Password cannot be empty";
+                  } else if (val.length < 6) {
+                    return "Password must be at least 6 characters";
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
+              // Sign-in button
               _isLoading
                   ? const CircularProgressIndicator(color: Colors.white)
                   : SizedBox(
@@ -164,6 +182,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 10),
+              // Register link
               Text.rich(TextSpan(
                 text: "Don't have an account? ",
                 style: const TextStyle(color: Colors.white70, fontSize: 14),
@@ -171,8 +190,7 @@ class _LoginPageState extends State<LoginPage> {
                   TextSpan(
                     text: "Register here",
                     style: const TextStyle(
-                        color: Colors.white,
-                        decoration: TextDecoration.underline),
+                        color: Colors.white, decoration: TextDecoration.underline),
                     recognizer: TapGestureRecognizer()
                       ..onTap = () {
                         nextScreen(context, const RegisterPage());
@@ -188,7 +206,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-// Function to navigate to the next screen and replace the current one
+// Utility functions
 void nextScreenReplace(BuildContext context, Widget page) {
   Navigator.pushReplacement(
     context,
@@ -196,7 +214,6 @@ void nextScreenReplace(BuildContext context, Widget page) {
   );
 }
 
-// Renamed function to avoid conflict with other `showSnackbar` functions
 void showCustomSnackbar(BuildContext context, Color color, String text) {
   final snackBar = SnackBar(
     content: Text(text),

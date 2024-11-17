@@ -54,9 +54,9 @@ class AuthService {
     }
   }
 
-  // Register User with email and password
+  // Register User with email, password, full name, and phone number
   Future<Object?> registerUserWithEmailandPassword(
-      String fullName, String email, String password) async {
+      String fullName, String email, String password, String phoneNumber) async {
     try {
       User user = (await firebaseAuth.createUserWithEmailAndPassword(
         email: email,
@@ -64,8 +64,8 @@ class AuthService {
       )).user!;
 
       if (user != null) {
-        // Save user data to the database
-        await DatabaseService(uid: user.uid).saveUserData(fullName, email);
+        // Save user data to the database, including the phone number
+        await DatabaseService(uid: user.uid).saveUserData(fullName, email, phoneNumber);
         return true;
       } else {
         return "User registration failed.";

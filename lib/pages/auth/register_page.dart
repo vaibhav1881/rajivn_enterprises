@@ -12,7 +12,6 @@ class RegisterPage extends StatefulWidget {
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
-
 class _RegisterPageState extends State<RegisterPage> {
   bool _isLoading = false;
   final formKey = GlobalKey<FormState>();
@@ -40,7 +39,6 @@ class _RegisterPageState extends State<RegisterPage> {
               Center(
                 child: Column(
                   children: [
-                    // Gradient text for "Yogi Group"
                     ShaderMask(
                       shaderCallback: (bounds) => LinearGradient(
                         colors: [Colors.white, Colors.teal],
@@ -54,11 +52,11 @@ class _RegisterPageState extends State<RegisterPage> {
                         style: TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white, // Placeholder color
+                          color: Colors.white,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8), // Space between header and label
+                    const SizedBox(height: 8),
                     const Text(
                       "Create your account to explore...!",
                       style: TextStyle(
@@ -195,7 +193,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.tealAccent[700], // Green button
+                    backgroundColor: Colors.tealAccent[700],
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
@@ -245,16 +243,18 @@ class _RegisterPageState extends State<RegisterPage> {
         _isLoading = true;
       });
       await authService
-          .registerUserWithEmailandPassword(fullName, email, password)
+          .registerUserWithEmailandPassword(fullName, email, password, phoneNumber) // Pass phone number here
           .then((value) async {
         if (value == true) {
-          // Save shared preference state
-          await HelperFunction.saveUserLoggedInStatus(true);
+          await HelperFunction.saveUserLoggedInStatus(true); // Set as logged in
           await HelperFunction.saveUserEmailSF(email);
           await HelperFunction.saveUserNameSF(fullName);
-          nextScreen(context, const HomePage(title: 'Homepage')); // Correct usage of nextScreenReplace
+
+          showSnackbar(context, Colors.green, "You're registered! :)");
+
+          nextScreen(context, const HomePage());
         } else {
-          showSnackbar(context, Colors.red, value.toString()); // Now calling showSnackbar
+          showSnackbar(context, Colors.red, value.toString());
           setState(() {
             _isLoading = false;
           });
