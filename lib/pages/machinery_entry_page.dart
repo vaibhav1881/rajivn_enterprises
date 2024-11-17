@@ -30,24 +30,19 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
     userID = FirebaseAuth.instance.currentUser?.uid; // Automatically set user ID
   }
 
-  // Method to request storage permission
   Future<void> requestStoragePermission() async {
     var status = await Permission.storage.request();
     if (status.isGranted) {
       // Permission granted, proceed with image picking
     } else if (status.isDenied) {
-      // Show an alert or message if permission is denied
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Storage permission is denied")),
       );
     } else if (status.isPermanentlyDenied) {
-      // Show an alert directing the user to settings if permission is permanently denied
       openAppSettings();
     }
   }
 
-
-  // Method to pick an image from gallery
   Future<void> _pickImage() async {
     await requestStoragePermission();
 
@@ -59,15 +54,12 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
         _imageFile = File(pickedFile.path);
       });
     } else {
-      // If no image was picked, show an alert
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("No image was picked")),
       );
     }
   }
 
-
-  // Method to show date and time picker for selecting start and stop hours
   Future<void> _selectDateTime(BuildContext context, bool isStart) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -101,7 +93,6 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
     }
   }
 
-  // Fetch site names from Firestore (assuming 'sites' collection exists in Firestore)
   Future<List<String>> _fetchSiteNames() async {
     final snapshot = await FirebaseFirestore.instance.collection('sites').get();
     return snapshot.docs.map((doc) => doc['siteName'] as String).toList();
@@ -118,7 +109,7 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
           'siteName': _selectedSiteName,
           'startHour': Timestamp.fromDate(DateTime.parse(_startHourController.text)),
           'stopHour': Timestamp.fromDate(DateTime.parse(_stopHourController.text)),
-          'imageUrl': _imageFile?.path, // Image file path or URL (you can upload the image to Firebase Storage)
+          'imageUrl': _imageFile?.path,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
@@ -126,7 +117,7 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
           const SnackBar(content: Text("Machinery entry added successfully!")),
         );
 
-        // Clear the form after submission
+        // Clear form after submission
         _driverIDController.clear();
         _machineIDController.clear();
         _startHourController.clear();
@@ -158,12 +149,18 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text("Machinery Entry"),
-        backgroundColor: Theme.of(context).primaryColor,
+        title: const Text("Machinery Entry", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent, // Removed the teal color
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white), // Changed to white
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: FutureBuilder<List<String>>(
           future: _fetchSiteNames(),
           builder: (context, snapshot) {
@@ -179,107 +176,124 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
 
             return Form(
               key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _driverIDController,
-                    decoration: const InputDecoration(labelText: "Driver ID"),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please enter the driver ID";
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _machineIDController,
-                    decoration: const InputDecoration(labelText: "Machine ID"),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please enter the machine ID";
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  DropdownButtonFormField<String>(
-                    value: _selectedMachineType,
-                    items: ['Bucket', 'Breaker']
-                        .map((type) => DropdownMenuItem(
-                      value: type,
-                      child: Text(type),
-                    ))
-                        .toList(),
-                    onChanged: (value) {
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildFancyTextField(_driverIDController, "Driver ID", Icons.drive_eta),
+                    const SizedBox(height: 20),
+                    _buildFancyTextField(_machineIDController, "Machine ID", Icons.directions_car),
+                    const SizedBox(height: 20),
+                    _buildFancyDropdown("Machine Type", ['Bucket', 'Breaker'], _selectedMachineType, (value) {
                       setState(() {
                         _selectedMachineType = value;
                       });
-                    },
-                    decoration: const InputDecoration(labelText: "Machine Type"),
-                  ),
-                  const SizedBox(height: 10),
-                  DropdownButtonFormField<String>(
-                    value: _selectedSiteName,
-                    items: siteNames
-                        .map((siteName) => DropdownMenuItem(
-                      value: siteName,
-                      child: Text(siteName),
-                    ))
-                        .toList(),
-                    onChanged: (value) {
+                    }),
+                    const SizedBox(height: 20),
+                    _buildFancyDropdown("Site Name", siteNames, _selectedSiteName, (value) {
                       setState(() {
                         _selectedSiteName = value;
                       });
-                    },
-                    decoration: const InputDecoration(labelText: "Site Name"),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _startHourController,
-                    decoration: const InputDecoration(
-                      labelText: "Start Hour",
-                      hintText: "yyyy-MM-dd HH:mm:ss",
-                    ),
-                    readOnly: true,
-                    onTap: () => _selectDateTime(context, true),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please select the start hour";
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _stopHourController,
-                    decoration: const InputDecoration(
-                      labelText: "Stop Hour",
-                      hintText: "yyyy-MM-dd HH:mm:ss",
-                    ),
-                    readOnly: true,
-                    onTap: () => _selectDateTime(context, false),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please select the stop hour";
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: _pickImage,
-                    child: const Text("Pick Image"),
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: submitMachineryEntry,
-                    child: const Text("Submit Entry"),
-                  ),
-                ],
+                    }),
+                    const SizedBox(height: 20),
+                    _buildFancyTextField(_startHourController, "Start Hour", Icons.access_time),
+                    const SizedBox(height: 20),
+                    _buildFancyTextField(_stopHourController, "Stop Hour", Icons.access_time_outlined),
+                    const SizedBox(height: 20),
+                    _buildImagePickerButton(),
+                    const SizedBox(height: 10), // Reduced space
+                    _buildSexySubmitButton(),
+                  ],
+                ),
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFancyTextField(TextEditingController controller, String label, IconData icon) {
+    return TextFormField(
+      controller: controller,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
+        prefixIcon: Icon(icon, color: Colors.teal),
+        filled: true,
+        fillColor: Colors.grey[850],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: const BorderSide(color: Colors.transparent),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: const BorderSide(color: Colors.teal, width: 2),
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter a value';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildFancyDropdown(String label, List<String> items, String? selectedValue, ValueChanged<String?> onChanged) {
+    return InputDecorator(
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.grey[850],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: selectedValue,
+          isExpanded: true,
+          style: const TextStyle(color: Colors.white),
+          onChanged: onChanged,
+          items: items.map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          dropdownColor: Colors.black,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePickerButton() {
+    return Center(
+      child: ElevatedButton.icon(
+        onPressed: _pickImage,
+        icon: const Icon(Icons.camera_alt, color: Colors.white),
+        label: const Text("Pick Image", style: TextStyle(color: Colors.white)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.teal, // Teal color
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSexySubmitButton() {
+    return Center(
+      child: ElevatedButton(
+        onPressed: submitMachineryEntry,
+        child: const Text("Submit Entry", style: TextStyle(color: Colors.white, fontSize: 18)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.teal, // Teal color
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
         ),
       ),
     );
