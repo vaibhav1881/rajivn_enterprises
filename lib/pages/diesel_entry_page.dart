@@ -24,6 +24,7 @@ class _DieselEntryPageState extends State<DieselEntryPage> {
     userID = FirebaseAuth.instance.currentUser?.uid;
   }
 
+  // Select date for diesel entry
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -39,6 +40,30 @@ class _DieselEntryPageState extends State<DieselEntryPage> {
     }
   }
 
+  // Fetch the site names dynamically from Firestore
+  // Fetch the site names dynamically from Firestore
+  Future<List<String>> _fetchSiteNames() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance.collection('sites').get();
+      // Check if siteName field exists and map to the list
+      return snapshot.docs.map((doc) {
+        // Try accessing the siteName field, if not found fallback to 'Unknown Site'
+        if (doc.data().containsKey('siteName')) {
+          return doc['siteName'] as String;
+        } else if (doc.data().containsKey('name')) {
+          return doc['name'] as String;  // Fallback to 'name' if 'siteName' is missing
+        } else {
+          return 'Unknown Site';  // Fallback if no siteName or name exists
+        }
+      }).toList();
+    } catch (e) {
+      print("Error fetching site names: $e");
+      return [];
+    }
+  }
+
+
+  // Submit the diesel entry to Firestore
   Future<void> submitDieselEntry() async {
     if (_formKey.currentState!.validate()) {
       try {
@@ -77,15 +102,15 @@ class _DieselEntryPageState extends State<DieselEntryPage> {
         title: const Text(
           "Diesel Entry",
           style: TextStyle(
-            color: Colors.white, // White text for the title
+            color: Colors.white,
             fontSize: 20,
           ),
         ),
-        backgroundColor: Colors.black, // Black background
+        backgroundColor: Colors.black,
         centerTitle: true,
-        elevation: 0, // Removes shadow
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white), // White arrow
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -154,46 +179,55 @@ class _DieselEntryPageState extends State<DieselEntryPage> {
                           },
                         ),
                         const SizedBox(height: 20),
-                        // Select Site
+                        // Select Site - Fetching site names dynamically from Firestore
                         const Text(
                           "Select Site",
                           style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
                         const SizedBox(height: 5),
-                        DropdownButtonFormField<String>(
-                          value: _selectedSiteName,
-                          items: const [
-                            DropdownMenuItem(
-                              value: "Gangapur Road",
-                              child: Text("Gangapur Road"),
-                            ),
-                            DropdownMenuItem(
-                              value: "Rane Nagar",
-                              child: Text("Rane Nagar"),
-                            ),
-                          ],
-                          dropdownColor: Colors.black,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.white),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.teal),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedSiteName = value;
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Please select a site";
+                        FutureBuilder<List<String>>(
+                          future: _fetchSiteNames(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const CircularProgressIndicator();
+                            } else if (snapshot.hasError) {
+                              return Text('Error: ${snapshot.error}');
+                            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return const Text('No sites available.');
                             }
-                            return null;
+
+                            final siteNames = snapshot.data!;
+
+                            return DropdownButtonFormField<String>(
+                              value: _selectedSiteName,
+                              items: siteNames
+                                  .map<DropdownMenuItem<String>>((site) {
+                                return DropdownMenuItem<String>(value: site, child: Text(site));
+                              }).toList(),
+                              dropdownColor: Colors.black,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: const BorderSide(color: Colors.white),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: const BorderSide(color: Colors.teal),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedSiteName = value;
+                                });
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Please select a site";
+                                }
+                                return null;
+                              },
+                            );
                           },
                         ),
                         const SizedBox(height: 20),
@@ -268,8 +302,7 @@ class _DieselEntryPageState extends State<DieselEntryPage> {
                               ),
                             ),
                           ),
-                        )
-
+                        ),
                       ],
                     ),
                   ),

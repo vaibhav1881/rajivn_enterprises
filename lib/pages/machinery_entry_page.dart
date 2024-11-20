@@ -15,7 +15,6 @@ class MachineryEntryPage extends StatefulWidget {
 class _MachineryEntryPageState extends State<MachineryEntryPage> {
   final TextEditingController _driverIDController = TextEditingController();
   final TextEditingController _machineIDController = TextEditingController();
-  final TextEditingController _imageController = TextEditingController();
   final TextEditingController _selectedHourController = TextEditingController();
   String? _selectedMachineType = 'Bucket'; // Default machine type
   String? _selectedSiteName;
@@ -31,6 +30,7 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
     userID = FirebaseAuth.instance.currentUser?.uid; // Automatically set user ID
   }
 
+  // Request storage permission for image picking
   Future<void> requestStoragePermission() async {
     var status = await Permission.storage.request();
     if (status.isGranted) {
@@ -44,6 +44,7 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
     }
   }
 
+  // Pick image from gallery
   Future<void> _pickImage() async {
     await requestStoragePermission();
 
@@ -61,6 +62,7 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
     }
   }
 
+  // Select date for machinery entry
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -76,11 +78,30 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
     }
   }
 
+  // Fetch the site names from Firestore
+  // Fetch the site names dynamically from Firestore
   Future<List<String>> _fetchSiteNames() async {
-    final snapshot = await FirebaseFirestore.instance.collection('sites').get();
-    return snapshot.docs.map((doc) => doc['siteName'] as String).toList();
+    try {
+      final snapshot = await FirebaseFirestore.instance.collection('sites').get();
+      // Check if siteName field exists and map to the list
+      return snapshot.docs.map((doc) {
+        // Try accessing the siteName field, if not found fallback to 'Unknown Site'
+        if (doc.data().containsKey('siteName')) {
+          return doc['siteName'] as String;
+        } else if (doc.data().containsKey('name')) {
+          return doc['name'] as String;  // Fallback to 'name' if 'siteName' is missing
+        } else {
+          return 'Unknown Site';  // Fallback if no siteName or name exists
+        }
+      }).toList();
+    } catch (e) {
+      print("Error fetching site names: $e");
+      return [];
+    }
   }
 
+
+  // Submit the machinery entry to Firestore
   Future<void> submitMachineryEntry() async {
     if (_formKey.currentState!.validate()) {
       try {
@@ -104,7 +125,6 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
         // Clear form after submission
         _driverIDController.clear();
         _machineIDController.clear();
-        _imageController.clear();
         _selectedHourController.clear();
         setState(() {
           _imageFile = null;
@@ -121,12 +141,10 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
     }
   }
 
-
   @override
   void dispose() {
     _driverIDController.dispose();
     _machineIDController.dispose();
-    _imageController.dispose();
     _selectedHourController.dispose();
     super.dispose();
   }
@@ -137,11 +155,11 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text("Machinery Entry", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent, // Removed the teal color
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white), // Changed to white
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -191,7 +209,7 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
                     ],
                     const SizedBox(height: 20),
                     _buildImagePickerButton(),
-                    const SizedBox(height: 10), // Reduced space
+                    const SizedBox(height: 10),
                     _buildSexySubmitButton(),
                   ],
                 ),
@@ -306,7 +324,7 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
           onChanged: (String? newValue) {
             setState(() {
               _selectedHour = newValue;
-              _selectedHourController.clear(); // Clear the manual input when dropdown is changed
+              _selectedHourController.clear();
             });
           },
           items: <String>['Start Hour', 'Stop Hour']

@@ -12,6 +12,7 @@ class RegisterPage extends StatefulWidget {
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
+
 class _RegisterPageState extends State<RegisterPage> {
   bool _isLoading = false;
   final formKey = GlobalKey<FormState>();
@@ -237,29 +238,46 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  // Registration method
   register() async {
     if (formKey.currentState!.validate()) {
       setState(() {
-        _isLoading = true;
+        _isLoading = true; // Show loading spinner
       });
-      await authService
-          .registerUserWithEmailandPassword(fullName, email, password, phoneNumber) // Pass phone number here
-          .then((value) async {
-        if (value == true) {
-          await HelperFunction.saveUserLoggedInStatus(true); // Set as logged in
+
+      try {
+        // Attempt to register the user with the provided details
+        Object? result = await authService.registerUserWithEmailandPassword(
+          fullName, email, password, phoneNumber,
+        );
+
+        // Check if registration is successful
+        if (result != null) {
+          // Once registration is successful, save user data in HelperFunction
+          await HelperFunction.saveUserLoggedInStatus(true);
           await HelperFunction.saveUserEmailSF(email);
           await HelperFunction.saveUserNameSF(fullName);
 
+          // Now navigate to the home page
+          debugPrint("User registered successfully!");
           showSnackbar(context, Colors.green, "You're registered! :)");
 
+          // Ensure navigation to the HomePage
           nextScreen(context, const HomePage());
         } else {
-          showSnackbar(context, Colors.red, value.toString());
-          setState(() {
-            _isLoading = false;
-          });
+          // If registration fails, show error message
+          debugPrint("Registration failed: $result");
+          showSnackbar(context, Colors.red, result.toString());
         }
-      });
+      } catch (e) {
+        // Catch any errors during registration
+        debugPrint("Error during registration: $e");
+        showSnackbar(context, Colors.red, "Registration error: $e");
+      } finally {
+        setState(() {
+          _isLoading = false; // Hide loading spinner after process completes
+        });
+      }
     }
   }
 }

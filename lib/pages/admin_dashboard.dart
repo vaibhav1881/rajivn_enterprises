@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rajivn_enterprises/pages/auth/login_page.dart';
+import 'package:rajivn_enterprises/pages/admin_add_new_site.dart';
 
 import 'admin_profile.dart';
 
@@ -70,9 +71,13 @@ class AdminHomePage extends StatelessWidget {
                             icon: Icons.add_location_alt,
                             label: 'Add New Site',
                             onTap: () {
-                              // Navigate to Add Site page
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => AddNewSitePage()),
+                              );
                             },
                           ),
+
                           _buildDashboardCard(
                             icon: Icons.construction,
                             label: 'Add New Machine',

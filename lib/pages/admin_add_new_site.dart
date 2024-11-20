@@ -1,103 +1,102 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class AddNewSitePage extends StatelessWidget {
-  final _formKey = GlobalKey<FormState>();
+class AddNewSitePage extends StatefulWidget {
+  const AddNewSitePage({super.key});
+
+  @override
+  _AddNewSitePageState createState() => _AddNewSitePageState();
+}
+
+class _AddNewSitePageState extends State<AddNewSitePage> {
   final TextEditingController _siteNameController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text(
-          'Add New Site',
-          style: TextStyle(color: Colors.white),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+          color: Colors.white, // White arrow
         ),
-        backgroundColor: Colors.black,
-        centerTitle: true,
+        title: const Text("Add New Site"),
+        backgroundColor: Colors.transparent, // Transparent app bar
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        centerTitle: true,
+        titleTextStyle: const TextStyle(
+          fontWeight: FontWeight.w500,
+          fontSize: 20,
+          color: Colors.white,
+        ),
       ),
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.black, Colors.deepPurple[900]!],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF1C1C1C), // Black at the top
+              Color(0xFF4A0072), // Dark purple at the bottom
+            ],
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Site Name Input
-                TextFormField(
-                  controller: _siteNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Site Name',
-                    labelStyle: const TextStyle(color: Colors.white),
-                    filled: true,
-                    fillColor: Colors.grey[800],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                const SizedBox(height: 100),
+                _buildCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Site Name",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildTextInputField(_siteNameController, "Enter Site Name"),
+                      const SizedBox(height: 16),
+                      const Text(
+                        "Location",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildTextInputField(_locationController, "Enter Location"),
+                    ],
                   ),
-                  style: const TextStyle(color: Colors.white),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the site name';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                // Location Input
-                TextFormField(
-                  controller: _locationController,
-                  decoration: InputDecoration(
-                    labelText: 'Location',
-                    labelStyle: const TextStyle(color: Colors.white),
-                    filled: true,
-                    fillColor: Colors.grey[800],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the location';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: 40),
-                // Submit Button
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // Perform the "Add New Site" functionality
-                        _addNewSite(context);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 15,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                ElevatedButton(
+                  onPressed: addNewSite,
+                  child: const Text(
+                    "Add Site",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                    child: const Text(
-                      'Add Site',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                    backgroundColor: Colors.teal,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
                     ),
+                    elevation: 8,
+                    shadowColor: Colors.tealAccent,
                   ),
                 ),
               ],
@@ -108,22 +107,75 @@ class AddNewSitePage extends StatelessWidget {
     );
   }
 
-  void _addNewSite(BuildContext context) {
-    final String siteName = _siteNameController.text.trim();
-    final String location = _locationController.text.trim();
-
-    // Add logic to save the site details to the database (e.g., Firebase)
-
-    // Show a success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Site "$siteName" added successfully!'),
-        backgroundColor: Colors.green,
+  // Text Input Field
+  Widget _buildTextInputField(TextEditingController controller, String label) {
+    return TextFormField(
+      controller: controller,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.black.withOpacity(0.5), // Semi-transparent black
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.teal.withOpacity(0.6)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.teal),
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
+      validator: (val) {
+        if (val!.isEmpty) {
+          return "This field cannot be empty";
+        }
+        return null;
+      },
     );
+  }
 
-    // Clear the form fields
-    _siteNameController.clear();
-    _locationController.clear();
+  // Custom Card
+  Widget _buildCard({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.5),
+            blurRadius: 10,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  // Add Site Function
+  addNewSite() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        await FirebaseFirestore.instance.collection('sites').add({
+          'siteName': _siteNameController.text.trim(),
+          'location': _locationController.text.trim(),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Site added successfully!")),
+        );
+
+        _siteNameController.clear();
+        _locationController.clear();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error adding site: $e")),
+        );
+      }
+    }
   }
 }
