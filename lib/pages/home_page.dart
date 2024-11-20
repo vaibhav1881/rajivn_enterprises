@@ -19,7 +19,7 @@ class _HomePageState extends State<HomePage> {
   String email = "No Email";
   String phoneNumber = "No Phone";
   AuthService authService = AuthService();
-  int selectedIndex = 0; // Tracks the selected menu item in the Drawer
+  int selectedIndex = 0;
 
   @override
   void initState() {
@@ -27,10 +27,8 @@ class _HomePageState extends State<HomePage> {
     gettingUserData();
   }
 
-  // Getting user data from shared preferences
   Future<void> gettingUserData() async {
     try {
-      // Retrieve user data from shared preferences or helper functions
       String? emailValue = await HelperFunction.getUserEmailFromSF();
       String? userNameValue = await HelperFunction.getUserNameFromSF();
       String? phoneValue = await HelperFunction.getUserPhoneNumberFromSF();
@@ -41,12 +39,10 @@ class _HomePageState extends State<HomePage> {
         phoneNumber = phoneValue ?? "No Phone";
       });
     } catch (e) {
-      // Handle any error that occurs while fetching user data
       showCustomSnackbar(context, Colors.red, "Error loading user data: $e");
     }
   }
 
-  // Method to show a custom snackbar for notifications
   void showCustomSnackbar(BuildContext context, Color color, String text) {
     final snackBar = SnackBar(
       content: Text(text),
@@ -58,59 +54,79 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
-        backgroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      drawer: _buildDrawer(),
-      body: SingleChildScrollView(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.black, Colors.teal],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
         child: Column(
           children: [
-            const SizedBox(height: 50), // Spacing from the top
-            // Cards for different functionalities
-            _buildCard(
-              title: "Machine Entry",
-              icon: Icons.construction,
-              gradientColors: [Colors.teal, Colors.tealAccent],
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MachineryEntryPage()),
-                );
-              },
+            AppBar(
+              title: const Text(
+                'DashBoard',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              centerTitle: true, // Center the title
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              iconTheme: const IconThemeData(color: Colors.white),
             ),
-            _buildCard(
-              title: "Diesel Entry",
-              icon: Icons.local_gas_station,
-              gradientColors: [Colors.orange, Colors.deepOrangeAccent],
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const DieselEntryPage()),
-                );
-              },
-            ),
-            _buildCard(
-              title: "Maintenance",
-              icon: Icons.build_circle_outlined,
-              gradientColors: [Colors.purple, Colors.purpleAccent],
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MaintenancePage()),
-                );
-              },
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 50),
+                    _buildCard(
+                      title: "Machine Entry",
+                      icon: Icons.construction,
+                      gradientColors: [Colors.teal, Colors.tealAccent],
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const MachineryEntryPage()),
+                        );
+                      },
+                    ),
+                    _buildCard(
+                      title: "Diesel Entry",
+                      icon: Icons.local_gas_station,
+                      gradientColors: [Colors.orange, Colors.deepOrangeAccent],
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const DieselEntryPage()),
+                        );
+                      },
+                    ),
+                    _buildCard(
+                      title: "Maintenance",
+                      icon: Icons.build_circle_outlined,
+                      gradientColors: [Colors.purple, Colors.purpleAccent],
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const MaintenancePage()),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
       ),
+      drawer: _buildDrawer(),
     );
   }
 
-  // Drawer UI
   Widget _buildDrawer() {
     return Drawer(
       child: Container(
@@ -159,7 +175,7 @@ class _HomePageState extends State<HomePage> {
                     builder: (context) => ProfilePage(
                       userName: userName,
                       email: email,
-                      phoneNumber: phoneNumber, // Pass the phone number
+                      phoneNumber: phoneNumber,
                     ),
                   ),
                 );
@@ -179,7 +195,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Method to build individual drawer items
   Widget _buildDrawerItem({
     required String title,
     required IconData icon,
@@ -199,7 +214,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Method to build cards for different sections
   Widget _buildCard({
     required String title,
     required IconData icon,
@@ -244,7 +258,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Method for handling logout
   void _handleLogout(BuildContext context) {
     showDialog(
       barrierDismissible: false,
@@ -269,7 +282,7 @@ class _HomePageState extends State<HomePage> {
                         (route) => false,
                   );
                 } catch (e) {
-                  Navigator.pop(context); // Close the dialog
+                  Navigator.pop(context);
                   showCustomSnackbar(context, Colors.red, "Logout failed: $e");
                 }
               },

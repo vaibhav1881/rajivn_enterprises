@@ -82,6 +82,7 @@ class _DieselEntryPageState extends State<DieselEntryPage> {
           ),
         ),
         backgroundColor: Colors.black, // Black background
+        centerTitle: true,
         elevation: 0, // Removes shadow
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white), // White arrow

@@ -13,7 +13,7 @@ class MaintenancePage extends StatelessWidget {
           style: TextStyle(
             color: Colors.white, // White text for the title
           ),
-        ),
+        ),centerTitle: true,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back, // Back arrow icon

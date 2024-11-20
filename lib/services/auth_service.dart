@@ -35,7 +35,7 @@ class AuthService {
         if (isAdmin) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const AdminDashboard()),
+            MaterialPageRoute(builder: (context) => AdminHomePage()),
           );
         } else {
           // Otherwise, navigate to the Machinery Entry Page (Machine Operator)

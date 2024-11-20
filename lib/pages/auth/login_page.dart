@@ -8,6 +8,8 @@ import 'package:rajivn_enterprises/helper/helper_function.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../widgets/widget.dart';
+import 'package:rajivn_enterprises/pages/admin_dashboard.dart';
+import '../admin_dashboard.dart'; // Import your Admin Dashboard page
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -63,7 +65,6 @@ class _LoginPageState extends State<LoginPage> {
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -198,6 +199,25 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ],
               )),
+              const SizedBox(height: 10),
+              // Admin link
+              Text.rich(
+                TextSpan(
+                  text: "Are you an Admin? ",
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                  children: <TextSpan>[
+                    TextSpan(
+                      text: "Login as Admin",
+                      style: const TextStyle(
+                          color: Colors.tealAccent, decoration: TextDecoration.underline),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () {
+                          nextScreen(context, AdminHomePage()); // Replace with your admin dashboard page
+                        },
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

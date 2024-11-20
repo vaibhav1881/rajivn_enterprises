@@ -139,6 +139,7 @@ class _MachineryEntryPageState extends State<MachineryEntryPage> {
         title: const Text("Machinery Entry", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent, // Removed the teal color
         elevation: 0,
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white), // Changed to white
           onPressed: () => Navigator.of(context).pop(),
