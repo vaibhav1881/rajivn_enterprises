@@ -1,30 +1,25 @@
-import 'package:rajivn_enterprises/helper/helper_function.dart';
-import 'package:rajivn_enterprises/pages/admin_dashboard.dart';
-import 'package:rajivn_enterprises/pages/auth/login_page.dart';
-import 'package:rajivn_enterprises/pages/machinery_entry_page.dart';
-import 'package:rajivn_enterprises/pages/profile_page.dart';
-import 'package:rajivn_enterprises/pages/search_page.dart';
-import 'package:rajivn_enterprises/pages/diesel_entry_page.dart'; // Add diesel entry page
-import 'package:rajivn_enterprises/services/auth_service.dart';
-import 'package:rajivn_enterprises/services/database_service.dart';
-import 'package:rajivn_enterprises/widgets/machinery_entry_tile.dart';
-import 'package:rajivn_enterprises/widgets/widget.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:rajivn_enterprises/pages/machinery_entry_page.dart';
+import 'package:rajivn_enterprises/pages/diesel_entry_page.dart';
+import 'package:rajivn_enterprises/pages/maintenance_page.dart';
+import 'package:rajivn_enterprises/pages/profile_page.dart';
+import 'package:rajivn_enterprises/pages/auth/login_page.dart';
+import 'package:rajivn_enterprises/services/auth_service.dart';
+import 'package:rajivn_enterprises/helper/helper_function.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, required String title});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  String userName = "";
-  String email = "";
-  bool isMachineOperator = false;
+  String userName = "No Name";
+  String email = "No Email";
+  String phoneNumber = "No Phone";
   AuthService authService = AuthService();
-  Stream? machineryEntries;
+  int selectedIndex = 0;
 
   @override
   void initState() {
@@ -32,250 +27,270 @@ class _HomePageState extends State<HomePage> {
     gettingUserData();
   }
 
-  gettingUserData() async {
-    // Retrieve user data from shared preferences or any helper functions
-    await HelperFunction.getUserEmailFromSF().then((value) {
+  Future<void> gettingUserData() async {
+    try {
+      String? emailValue = await HelperFunction.getUserEmailFromSF();
+      String? userNameValue = await HelperFunction.getUserNameFromSF();
+      String? phoneValue = await HelperFunction.getUserPhoneNumberFromSF();
+
       setState(() {
-        email = value!;
+        email = emailValue ?? "No Email";
+        userName = userNameValue ?? "No Name";
+        phoneNumber = phoneValue ?? "No Phone";
       });
-
-      // If the user's email matches the admin's email, navigate them to the admin dashboard
-      if (email == "bhagwatvr2004@gmail.com") {
-        nextScreenReplace(context, const AdminDashboard());
-      }
-    });
-
-    await HelperFunction.getUserNameFromSF().then((val) {
-      setState(() {
-        userName = val!;
-      });
-    });
-
-    // Check if the user is an admin, and if not, set the user as a machine operator
-    bool isAdmin = await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid).isAdmin(email);
-    setState(() {
-      isMachineOperator = !isAdmin;  // If not admin, user is a machine operator
-    });
-
-    // Retrieve machinery entries for this user
-    await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
-        .getUserMachineryEntries()
-        .then((snapshot) {
-      setState(() {
-        machineryEntries = snapshot as Stream?;
-      });
-    });
+    } catch (e) {
+      showCustomSnackbar(context, Colors.red, "Error loading user data: $e");
+    }
   }
 
+  void showCustomSnackbar(BuildContext context, Color color, String text) {
+    final snackBar = SnackBar(
+      content: Text(text),
+      backgroundColor: color,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          IconButton(
-              onPressed: () {
-                nextScreen(context, const SearchPage());
-              },
-              icon: const Icon(
-                Icons.search,
-              ))
-        ],
-        elevation: 0,
-        centerTitle: true,
-        backgroundColor: Theme.of(context).primaryColor,
-        title: const Text(
-          "Machinery Tracker",
-          style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 27),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.black, Colors.teal],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
-      ),
-      drawer: Drawer(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 50),
-            children: <Widget>[
-              Icon(
-                Icons.account_circle,
-                size: 150,
-                color: Colors.grey[700],
-              ),
-              const SizedBox(
-                height: 15,
-              ),
-              Text(
-                userName,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              const Divider(
-                height: 2,
-              ),
-              ListTile(
-                onTap: () {} ,
-                selectedColor: Theme.of(context).primaryColor,
-                selected: true,
-                contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                leading: const Icon(Icons.settings),
-                title: const Text(
-                  "Dashboard",
-                  style: TextStyle(color: Colors.black),
+        child: Column(
+          children: [
+            AppBar(
+              title: const Text(
+                'DashBoard',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              ListTile(
-                onTap: () {
-                  nextScreenReplace(
-                      context,
-                      ProfilePage(
-                        userName: userName,
-                        email: email,
-                      ));
-                },
-                contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                leading: const Icon(Icons.account_circle),
-                title: const Text(
-                  "Profile",
-                  style: TextStyle(color: Colors.black),
-                ),
-              ),
-              ListTile(
-                onTap: () async {
-                  showDialog(
-                      barrierDismissible: false,
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text("Logout"),
-                          content: const Text("Are you sure you want to logout?"),
-                          actions: [
-                            IconButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              icon: const Icon(
-                                Icons.cancel,
-                                color: Colors.red,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () async {
-                                await authService.signOut();
-                                Navigator.of(context).pushAndRemoveUntil(
-                                    MaterialPageRoute(
-                                        builder: (context) => const LoginPage()),
-                                        (route) => false);
-                              },
-                              icon: const Icon(
-                                Icons.done,
-                                color: Colors.green,
-                              ),
-                            ),
-                          ],
-                        );
-                      });
-                },
-                contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                leading: const Icon(Icons.exit_to_app),
-                title: const Text(
-                  "Logout",
-                  style: TextStyle(color: Colors.black),
-                ),
-              )
-            ],
-          )),
-      body: Column(
-        children: [
-          if (isMachineOperator) ...[
-            ElevatedButton(
-              onPressed: () => nextScreen(context, const MachineryEntryPage()),
-              child: const Text("Machine Entry"),
+              centerTitle: true, // Center the title
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              iconTheme: const IconThemeData(color: Colors.white),
             ),
-            ElevatedButton(
-              onPressed: () => nextScreen(context, const DieselEntryPage()),
-              child: const Text("Diesel Entry"),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 50),
+                    _buildCard(
+                      title: "Machine Entry",
+                      icon: Icons.construction,
+                      gradientColors: [Colors.teal, Colors.tealAccent],
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const MachineryEntryPage()),
+                        );
+                      },
+                    ),
+                    _buildCard(
+                      title: "Diesel Entry",
+                      icon: Icons.local_gas_station,
+                      gradientColors: [Colors.orange, Colors.deepOrangeAccent],
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const DieselEntryPage()),
+                        );
+                      },
+                    ),
+                    _buildCard(
+                      title: "Maintenance",
+                      icon: Icons.build_circle_outlined,
+                      gradientColors: [Colors.purple, Colors.purpleAccent],
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const MaintenancePage()),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
-          Expanded(child: machineryEntryList()),
-        ],
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          nextScreen(context, const MachineryEntryPage());
-        },
-        elevation: 0,
-        backgroundColor: Theme.of(context).primaryColor,
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 30,
+      drawer: _buildDrawer(),
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: Container(
+        color: Colors.black,
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 50),
+          children: [
+            Icon(
+              Icons.account_circle,
+              size: 150,
+              color: Colors.grey[700],
+            ),
+            const SizedBox(height: 15),
+            Text(
+              userName,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 30),
+            const Divider(color: Colors.grey),
+            _buildDrawerItem(
+              title: "Dashboard",
+              icon: Icons.dashboard,
+              isSelected: selectedIndex == 0,
+              onTap: () {
+                setState(() {
+                  selectedIndex = 0;
+                });
+                Navigator.pop(context);
+              },
+            ),
+            _buildDrawerItem(
+              title: "Profile",
+              icon: Icons.account_circle,
+              isSelected: selectedIndex == 1,
+              onTap: () {
+                setState(() {
+                  selectedIndex = 1;
+                });
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfilePage(
+                      userName: userName,
+                      email: email,
+                      phoneNumber: phoneNumber,
+                    ),
+                  ),
+                );
+              },
+            ),
+            _buildDrawerItem(
+              title: "Logout",
+              icon: Icons.exit_to_app,
+              isSelected: false,
+              onTap: () {
+                _handleLogout(context);
+              },
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // Display list of machinery entries
-  machineryEntryList() {
-    return StreamBuilder(
-      stream: machineryEntries,
-      builder: (context, AsyncSnapshot snapshot) {
-        if (snapshot.hasData) {
-          if (snapshot.data['entries'] != null && snapshot.data['entries'].length != 0) {
-            return ListView.builder(
-              itemCount: snapshot.data['entries'].length,
-              itemBuilder: (context, index) {
-                int reverseIndex = snapshot.data['entries'].length - index - 1;
-                return MachineryEntryTile(
-                  entryId: snapshot.data['entries'][reverseIndex].id,
-                  entryData: snapshot.data['entries'][reverseIndex].data(),
-                  userName: userName, machineryName: '', siteName: '', endTime: '', driverName: '', startTime: '',
-                );
-              },
-            );
-          } else {
-            return noEntriesWidget();
-          }
-        } else {
-          return Center(
-            child: CircularProgressIndicator(
-                color: Theme.of(context).primaryColor),
-          );
-        }
-      },
+  Widget _buildDrawerItem({
+    required String title,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      selectedColor: Colors.blue,
+      selected: isSelected,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+      leading: Icon(icon, color: Colors.white),
+      title: Text(
+        title,
+        style: const TextStyle(color: Colors.white),
+      ),
+      onTap: onTap,
     );
   }
 
-  // Display message if there are no entries
-  noEntriesWidget() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 25),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          GestureDetector(
-            onTap: () {
-              nextScreen(context, const MachineryEntryPage());
-            },
-            child: Icon(
-              Icons.add_circle,
-              color: Colors.grey[700],
-              size: 75,
+  Widget _buildCard({
+    required String title,
+    required IconData icon,
+    required List<Color> gradientColors,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      elevation: 10,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          height: 120,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: gradientColors,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            borderRadius: BorderRadius.circular(20),
           ),
-          const SizedBox(
-            height: 20,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(icon, size: 40, color: Colors.white),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-          const Text(
-            "No machinery entries found. Tap the add icon to create an entry.",
-            textAlign: TextAlign.center,
-          )
-        ],
+        ),
       ),
+    );
+  }
+
+  void _handleLogout(BuildContext context) {
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Logout"),
+          content: const Text("Are you sure you want to logout?"),
+          actions: [
+            IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.cancel, color: Colors.red),
+            ),
+            IconButton(
+              onPressed: () async {
+                try {
+                  await authService.signOut();
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                        (route) => false,
+                  );
+                } catch (e) {
+                  Navigator.pop(context);
+                  showCustomSnackbar(context, Colors.red, "Logout failed: $e");
+                }
+              },
+              icon: const Icon(Icons.done, color: Colors.green),
+            ),
+          ],
+        );
+      },
     );
   }
 }

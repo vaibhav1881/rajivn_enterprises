@@ -2,33 +2,47 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DatabaseService {
   final String? uid;
+
   DatabaseService({this.uid});
 
   // Collection references
   final CollectionReference userCollection =
   FirebaseFirestore.instance.collection("users");
-  final CollectionReference machineryEntriesCollection =
-  FirebaseFirestore.instance.collection("machinery_entries");
-  final CollectionReference sitesCollection =
-  FirebaseFirestore.instance.collection("sites");
-  final CollectionReference machineTypesCollection =
-  FirebaseFirestore.instance.collection("machine_types");
-  final CollectionReference dieselEntriesCollection =
-  FirebaseFirestore.instance.collection("diesel_entries");
 
-  // Saving user data
-  Future saveUserData(String fullName, String email) async {
+  // Saving user data (including phone number)
+  Future saveUserData(String fullName, String email, String phoneNumber) async {
     return await userCollection.doc(uid).set({
       "fullname": fullName,
       "email": email,
+      "phoneNumber": phoneNumber, // Save the phone number
     });
   }
 
-  // Getting user data
-  Future gettingUserData(String email) async {
-    QuerySnapshot snapshot =
-    await userCollection.where("email", isEqualTo: email).get();
-    return snapshot;
+  // Getting user data by email
+  Future<Map<String, dynamic>?> getUserDataByEmail(String email) async {
+    try {
+      QuerySnapshot snapshot = await userCollection.where("email", isEqualTo: email).get();
+      if (snapshot.docs.isNotEmpty) {
+        var doc = snapshot.docs.first;
+        return doc.data() as Map<String, dynamic>;
+      }
+    } catch (e) {
+      print("Error fetching user data by email: $e");
+    }
+    return null;
+  }
+
+  // Getting user data by uid (for profile page)
+  Future<Map<String, dynamic>?> getUserDataByUid() async {
+    try {
+      DocumentSnapshot snapshot = await userCollection.doc(uid).get();
+      if (snapshot.exists) {
+        return snapshot.data() as Map<String, dynamic>;
+      }
+    } catch (e) {
+      print("Error fetching user data by UID: $e");
+    }
+    return null;
   }
 
   // Check if the user is admin
@@ -62,7 +76,7 @@ class DatabaseService {
     required double dieselEntry,
     String? imagePath,
   }) async {
-    return await machineryEntriesCollection.add({
+    return await FirebaseFirestore.instance.collection("machinery_entries").add({
       "userId": uid,
       "machineType": machineType,
       "machineID": machineID,
@@ -78,61 +92,16 @@ class DatabaseService {
 
   // Fetching machinery entries for the current user
   Future<QuerySnapshot> getUserMachineryEntries() async {
-    return await machineryEntriesCollection
+    return await FirebaseFirestore.instance
+        .collection("machinery_entries")
         .where("userId", isEqualTo: uid)
         .orderBy("createdAt", descending: true)
         .get();
   }
 
-  // Adding a diesel refill entry
-  Future addDieselEntry({
-    required String machineID,
-    required double amount,
-    required DateTime refillTime,
-    required String siteName,
-  }) async {
-    return await dieselEntriesCollection.add({
-      "userId": uid,
-      "machineID": machineID,
-      "amount": amount,
-      "refillTime": refillTime,
-      "siteName": siteName,
-    });
-  }
-
-  // Adding a new site
-  Future addSite(String siteName) async {
-    return await sitesCollection.add({
-      "siteName": siteName,
-      "createdAt": FieldValue.serverTimestamp(),
-    });
-  }
-
-  // Adding a machine to machine_types collection
-  Future addMachineType({
-    required String machineType,
-    required String machineID,
-  }) async {
-    DocumentReference machineTypeDoc = machineTypesCollection.doc(machineType);
-    CollectionReference machinesSubcollection = machineTypeDoc.collection("machines");
-
-    return await machinesSubcollection.doc(machineID).set({
-      "machineID": machineID,
-      "isActive": true,
-      "createdAt": FieldValue.serverTimestamp(),
-    });
-  }
-
-  // Fetching user data by email
-  Future getUserDataByEmail(String email) async {
-    QuerySnapshot snapshot =
-    await userCollection.where("email", isEqualTo: email).get();
-    return snapshot;
-  }
-
   // Fetching all machinery entries
   Future getAllMachineryEntries() async {
-    QuerySnapshot snapshot = await machineryEntriesCollection.get();
+    QuerySnapshot snapshot = await FirebaseFirestore.instance.collection("machinery_entries").get();
     return snapshot;
   }
 }
